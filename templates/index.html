@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prediksi Niat Beli Pengunjung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eeecf6;--panel:#fff;--ink:#1c1a33;--muted:#5f5c7a;--line:#d6d2e8;--primary:#4b34c9;--primary-d:#3a27a3;--no:#cfcbe3;--amber:#b45309;--amber-bg:#fdf1e3;--violet-bg:#eeeafc}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+.top,.layout,.foot{max-width:1120px;margin:0 auto;padding:0 20px}
+.top{padding-top:34px;padding-bottom:18px}
+.top h1{font-size:clamp(1.65rem,4vw,2.25rem);line-height:1.15;margin:0 0 8px;letter-spacing:-.015em;font-weight:800}
+.top p{margin:0;max-width:64ch;color:var(--muted)}
+.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start;padding-bottom:28px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #e6e3f2}
+.presets span{font-size:.85rem;color:var(--muted);font-weight:600}
+.chip{font:inherit;font-size:.85rem;font-weight:600;background:var(--violet-bg);color:var(--primary-d);border:1px solid #cfc7f5;border-radius:99px;padding:6px 14px;cursor:pointer;width:auto;margin:0}
+.chip:hover{background:#e2dcfa}
+fieldset{border:0;margin:0 0 18px;padding:0}
+legend{font-weight:800;font-size:1.02rem;padding:0;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:3px}
+label{font-size:.88rem;font-weight:600}
+small{color:var(--muted);font-size:.78rem}
+input,select{font:inherit;color:var(--ink);background:#fff;border:1px solid #a9a3c9;border-radius:7px;padding:9px 10px;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #8f7ff0;outline-offset:2px}
+.submit{font:inherit;font-weight:700;background:var(--primary);color:#fff;border:0;border-radius:8px;padding:13px 22px;cursor:pointer;width:100%;margin-top:4px}
+.submit:hover{background:var(--primary-d)}
+.errors{background:var(--amber-bg);border:1px solid #efc58f;border-radius:8px;padding:12px 14px;margin-bottom:16px;color:#7a3a06}
+.errors ul{margin:6px 0 0;padding-left:20px}
+
+.side{display:flex;flex-direction:column;gap:20px;position:sticky;top:16px}
+.result:focus{outline:none}
+.result h2{font-size:1.55rem;margin:0 0 2px;line-height:1.2;font-weight:800}
+.result h3,.imp h3{font-size:.95rem;margin:0 0 8px;font-weight:800}
+.pct{margin:0}.pct strong{font-size:1.9rem;letter-spacing:-.02em}
+.muted{color:var(--muted);font-size:.85rem;margin:6px 0 0}
+.is-buy{border-color:var(--primary);box-shadow:inset 0 5px 0 var(--primary)}
+.is-buy h2,.is-buy .pct strong{color:var(--primary)}
+.is-skip{border-color:var(--amber);box-shadow:inset 0 5px 0 var(--amber)}
+.is-skip h2,.is-skip .pct strong{color:var(--amber)}
+.votes-title{margin:18px 0 8px;font-size:.95rem;font-weight:800}
+.forest{display:grid;grid-template-columns:repeat(auto-fill,13px);gap:3px}
+.tree{width:13px;height:13px;border-radius:3px;background:var(--no)}
+.tree.y{background:var(--primary)}
+.legend{display:flex;gap:16px;margin-top:10px;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+
+.imp ol{list-style:none;margin:0;padding:0}
+.imp li{margin-bottom:9px}
+.imp .name{display:flex;justify-content:space-between;font-size:.86rem;font-weight:600}
+.imp .name span:last-child{color:var(--muted);font-weight:500}
+.track{height:8px;background:#e6e3f2;border-radius:99px;margin-top:3px;overflow:hidden}
+.fill{height:100%;background:var(--primary);border-radius:99px}
+.foot{padding-bottom:34px;color:var(--muted);font-size:.84rem}
+@media (max-width:860px){.layout{grid-template-columns:1fr}.side{position:static}}
+@media (max-width:520px){.grid{grid-template-columns:1fr}.card{padding:18px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top">
+<h1>Prediksi niat beli pengunjung</h1>
+<p>Masukkan data satu sesi kunjungan di toko online. Model Random Forest akan memperkirakan apakah sesi itu berakhir dengan pembelian, dan menunjukkan bagaimana {{ n_trees }} pohon di dalamnya “memberi suara”.</p>
+</header>
+
+<main class="layout">
+<form class="card" method="post" action="{{ url_for('predict_view') }}#hasil" novalidate>
+<div class="presets">
+<span>Isi contoh:</span>
+<button type="button" class="chip" data-preset="serius">Pengunjung serius</button>
+<button type="button" class="chip" data-preset="lihat">Hanya melihat-lihat</button>
+</div>
+
+{% if errors %}
+<div class="errors" role="alert"><strong>Periksa kembali isian Anda:</strong>
+<ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>
+{% endif %}
+
+{% for title, fields in groups %}
+<fieldset><legend>{{ title }}</legend>
+<div class="grid">
+{% for f in fields %}
+<div class="field">
+<label for="{{ f }}">{{ labels[f] }}</label>
+{% if f in numeric %}
+<input id="{{ f }}" name="{{ f }}" type="text" inputmode="decimal" autocomplete="off" value="{{ values[f] }}">
+<small>{{ numeric[f][1] }}</small>
+{% else %}
+<select id="{{ f }}" name="{{ f }}">
+{% for val, text in select_options(f) %}<option value="{{ val }}" {% if values[f] == val %}selected{% endif %}>{{ text }}</option>{% endfor %}
+</select>
+{% endif %}
+</div>
+{% endfor %}
+</div></fieldset>
+{% endfor %}
+<button type="submit" class="submit">Prediksi niat beli</button>
+</form>
+
+<div class="side">
+<section id="hasil" class="card result {% if result %}{{ 'is-buy' if result.buy else 'is-skip' }}{% endif %}" tabindex="-1" aria-live="polite">
+{% if result %}
+<h2>{{ result.label }}</h2>
+<p class="pct"><strong>{{ result.pct }}%</strong> peluang sesi ini berakhir dengan pembelian</p>
+<p class="votes-title">{{ result.yes }} dari {{ result.total }} pohon memilih “membeli”</p>
+<div class="forest" role="img" aria-label="{{ result.yes }} dari {{ result.total }} pohon memilih membeli">
+{% for c in result.cells %}<span class="tree {{ 'y' if c else '' }}"></span>{% endfor %}
+</div>
+<div class="legend"><span><i style="background:var(--primary)"></i>Pohon memilih membeli</span><span><i style="background:var(--no)"></i>Pohon memilih tidak</span></div>
+<p class="muted">Peluang dihitung dari rata-rata probabilitas semua pohon, sehingga bisa sedikit berbeda dari hitungan suara.</p>
+{% else %}
+<h2>Hasil prediksi</h2>
+<p class="muted">Isi formulir atau pilih salah satu contoh, lalu tekan “Prediksi niat beli”. Hasil dan suara tiap pohon akan tampil di sini.</p>
+{% endif %}
+</section>
+
+<section class="card imp">
+<h3>Faktor paling menentukan menurut model</h3>
+<ol>
+{% for it in importance %}
+<li><div class="name"><span>{{ it.label }}</span><span>{{ it.value }}%</span></div><div class="track"><div class="fill" style="width:{{ it.width }}%"></div></div></li>
+{% endfor %}
+</ol>
+<p class="muted">Feature importance gabungan dari seluruh pohon pada data latih.</p>
+</section>
+</div>
+</main>
+
+<footer class="foot">Model: Random Forest dilatih pada dataset Online Shoppers Purchasing Intention. Hasil bersifat perkiraan untuk tujuan pembelajaran.</footer>
+
+<script>
+(function(){
+var P={
+serius:{Administrative:3,Administrative_Duration:120,Informational:1,Informational_Duration:40,ProductRelated:45,ProductRelated_Duration:2200,BounceRates:0.5,ExitRates:1.5,PageValues:25,SpecialDay:"0",Month:"Nov",VisitorType:"Returning_Visitor",Weekend:"0"},
+lihat:{Administrative:0,Administrative_Duration:0,Informational:0,Informational_Duration:0,ProductRelated:3,ProductRelated_Duration:60,BounceRates:15,ExitRates:20,PageValues:0,SpecialDay:"0",Month:"May",VisitorType:"New_Visitor",Weekend:"1"}};
+document.querySelectorAll("[data-preset]").forEach(function(b){
+b.addEventListener("click",function(){
+var d=P[b.dataset.preset];
+Object.keys(d).forEach(function(k){
+var el=document.getElementById(k); if(!el) return;
+if(el.tagName==="SELECT"){ var ok=Array.prototype.some.call(el.options,function(o){return o.value===String(d[k]);}); if(ok) el.value=String(d[k]); }
+else el.value=d[k];
+});
+});
+});
+})();
+</script>
+</body>
+</html>
